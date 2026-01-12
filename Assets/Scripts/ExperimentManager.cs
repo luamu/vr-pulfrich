@@ -1,0 +1,175 @@
+using System.Collections;
+using System.IO;
+using UnityEngine;
+
+public enum DominantEye
+{
+    right,
+    left
+}
+
+public class ExperimentManager : MonoBehaviour
+{
+    [Header("Stimuli")]
+    public MovingBarStimulus movingBar;        // controller
+
+    [Header("Stimulus Speed")]
+    public float speedDegPerSec = 20f;
+
+    [Header("Participant Name")]
+    [Tooltip("Will be used for the output filename: Pulfrich_<contestantName>.csv")]
+    public string contestantName = "test";
+
+    [Header("Dominant Eye (right or left)")]
+    public DominantEye dominantEye = DominantEye.right;
+
+    int trialIndex = -1;
+    bool awaitingResponse = false;
+    string outputFileName;
+    
+    float[] distancesMeters = new float[]
+    {
+        -10.0f,
+        10.0f,
+        -8.0f,
+        8.0f,
+        -6.0f,
+        6.0f,
+        -5.0f,
+        5.0f,
+        -4.0f,
+        4.0f,
+        -2.0f,
+        2.0f,
+        -1.0f,
+        1.0f
+    };
+
+    void Start()
+    {
+        if (movingBar == null)
+        {
+            Debug.LogError("ExperimentManager: movingBar not assigned.");
+            enabled = false;
+            return;
+        }
+
+        ShuffleDistances();   //randomize trial order
+
+        SetupOutputFile();
+        StartCoroutine(RunExperiment());
+    }
+
+    IEnumerator RunExperiment()
+    {
+    for (trialIndex = 0; trialIndex < distancesMeters.Length; trialIndex++)
+    {
+        float distance = distancesMeters[trialIndex];
+
+        movingBar.Configure(
+            newSignedOffsetMeters: distance,
+            newDirection: GetStimulusDirection(),
+            newSpeedDegPerSec: speedDegPerSec
+        );
+
+        awaitingResponse = true;
+
+        // Wait for response
+        while (awaitingResponse)
+            yield return null;
+    }
+
+    // Gray screen after experiment is finished
+    if (movingBar != null)
+    {
+        movingBar.gameObject.SetActive(false);
+    }
+
+    Debug.Log("Experiment finished.");
+    }
+
+    void Update()
+    {
+        if (!awaitingResponse)
+            return;
+
+        // behind = Up Arrow
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+            SubmitResponse(true);
+        // before = Down Arrow
+        else if (Input.GetKeyDown(KeyCode.DownArrow))
+            SubmitResponse(false);
+    }
+
+    int GetStimulusDirection()
+    {
+        // Convention:
+        //  1  = left → right
+        // -1  = right → left
+
+        return dominantEye == DominantEye.right ? 1 : -1;
+    }
+
+    void ShuffleDistances()
+    {
+        for (int i = 0; i < distancesMeters.Length; i++)
+        {
+            int j = Random.Range(i, distancesMeters.Length);
+            float temp = distancesMeters[i];
+            distancesMeters[i] = distancesMeters[j];
+            distancesMeters[j] = temp;
+        }
+    }
+
+    void SubmitResponse(bool positionBehind)
+    {
+        if (!awaitingResponse)
+            return;
+
+        awaitingResponse = false;
+
+        float distance = distancesMeters[trialIndex];
+
+        // Write response (distance + behind/before) to file
+        WriteLine(distance, positionBehind);
+
+        Debug.Log(
+            $"Trial {trialIndex + 1}/{distancesMeters.Length} | " +
+            $"Distance = {distance:F2} m | Response = {(positionBehind ? "BEHIND" : "BEFORE")}"
+        );
+    }
+
+    void SetupOutputFile()
+    {
+        string outputDir = Path.Combine(Application.dataPath, "..", "Measurements");
+        if (!Directory.Exists(outputDir))
+            Directory.CreateDirectory(outputDir);
+
+        // Sanitize name for filesystem safety
+        string safeName = string.IsNullOrWhiteSpace(contestantName) ? "unknown" : contestantName.Trim();
+        foreach (char c in Path.GetInvalidFileNameChars())
+            safeName = safeName.Replace(c.ToString(), "_");
+
+        // name with contestant and timestamp
+        outputFileName = $"Pulfrich_{safeName}_{System.DateTime.Now:yyyyMMdd_HHmmss}.csv";
+
+        string path = Path.Combine(outputDir, outputFileName);
+
+        // Header: distance + response (and trial number)
+        File.WriteAllText(path, "trial,distance_m,response\n");
+
+        Debug.Log($"Logging to: {path}");
+    }
+
+    void WriteLine(float distance, bool positionBehind)
+    {
+        string outputDir = Path.Combine(Application.dataPath, "..", "Measurements");
+        string path = Path.Combine(outputDir, outputFileName);
+
+        int trialNumber = trialIndex + 1;
+        string response = positionBehind ? "BEHIND" : "BEFORE";
+
+        File.AppendAllText(path, $"{trialNumber},{distance:F3},{response}\n");
+    }
+
+}
