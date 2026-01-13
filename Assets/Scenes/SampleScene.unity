@@ -176,10 +176,7 @@ MonoBehaviour:
   bar: {fileID: 1706302310}
   visualHeightDeg: 4
   barWidthDeg: 0.5
-  baseDistanceMeters: 15
-  signedOffsetMeters: 0
   speedDegPerSec: 20
-  direction: 1
   spawnPaddingDeg: 2
   yOffsetDeg: 0
 --- !u!1001 &1034132303
@@ -291,6 +288,10 @@ PrefabInstance:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 9014170783809206330, guid: 895f6f3c2d334633b5800312285058d2, type: 3}
+      propertyPath: m_RenderingPath
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9014170783809206330, guid: 895f6f3c2d334633b5800312285058d2, type: 3}
       propertyPath: m_BackGroundColor.b
       value: 0.6886792
       objectReference: {fileID: 0}
@@ -320,7 +321,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9014170783809206335, guid: 895f6f3c2d334633b5800312285058d2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 553768438}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 9014170783809206332, guid: 895f6f3c2d334633b5800312285058d2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1422286989}
   m_SourcePrefab: {fileID: 100100000, guid: 895f6f3c2d334633b5800312285058d2, type: 3}
 --- !u!1 &1227654436
 GameObject:
@@ -476,6 +480,26 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1297755225}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1422286985 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9014170783809206332, guid: 895f6f3c2d334633b5800312285058d2, type: 3}
+  m_PrefabInstance: {fileID: 1034132303}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1422286989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1422286985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 831f78cf95d388ea3abbc15bdcbfefcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  leftEyeBrightness: 1
+  rightEyeBrightness: 1
+  brightnessMaterial: {fileID: 2100000, guid: e583025b6f252ba4496543bd30f67603, type: 2}
 --- !u!1 &1706302309
 GameObject:
   m_ObjectHideFlags: 0
