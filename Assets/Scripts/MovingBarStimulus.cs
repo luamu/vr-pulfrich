@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class MovingBarStimulus : MonoBehaviour
 {
-    [Header("Stimulus Bar")]
-    public Transform bar;   // Assign the Quad/Cube that is the visible bar
+    //[Header("Stimulus Bar")]
+    private Transform bar;   // Assign the Quad/Cube that is the visible bar
 
     [Header("Visual Angle")]
     [Range(0.1f, 60f)]
@@ -12,7 +12,7 @@ public class MovingBarStimulus : MonoBehaviour
 
     [Header("Motion")]
     [Tooltip("Horizontal speed in deg/sec (converted to meters based on final Z).")]
-    public float speedDegPerSec = 20f;
+    public float speedDegPerSec = 50f;
     [Tooltip("Extra padding outside FOV for respawn, in degrees.")]
     public float spawnPaddingDeg = 2f;
 
@@ -28,12 +28,12 @@ public class MovingBarStimulus : MonoBehaviour
 
     void Reset()
     {
-        if (bar == null && transform.childCount > 0)
-            bar = transform.GetChild(0);
+        
     }
 
     void Start()
     {
+        bar = transform;
         CacheFov();
         ApplySizeAndPosition();
         Respawn();
@@ -84,6 +84,7 @@ public class MovingBarStimulus : MonoBehaviour
 
     void CacheFov()
     {
+        // this is just a quick fix and should be reimplemented because it's a horrible way to do it
         Camera cam = GetComponentInParent<Camera>();
         if (cam == null)
         {

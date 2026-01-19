@@ -1,11 +1,12 @@
+using System;
 using System.Collections;
 using System.IO;
 using UnityEngine;
 
 public enum DominantEye
 {
-    right,
-    left
+    left,
+    right
 }
 
 public class ExperimentManager : MonoBehaviour
@@ -20,8 +21,10 @@ public class ExperimentManager : MonoBehaviour
     [Tooltip("Will be used for the output filename: Pulfrich_<contestantName>.csv")]
     public string contestantName = "test";
 
-    [Header("Dominant Eye (right or left)")]
+    [Header("Eye configuration")]
     public DominantEye dominantEye = DominantEye.right;
+    public ShadingManager shadingManager;
+    public Camera camera;
 
     int trialIndex = -1;
     bool awaitingResponse = false;
@@ -54,6 +57,9 @@ public class ExperimentManager : MonoBehaviour
             return;
         }
 
+        // Set position of eye shading
+        shadingManager.SetEyePosition(Convert.ToInt32(dominantEye));
+        
         ShuffleDistances();   //randomize trial order
 
         SetupOutputFile();
@@ -114,7 +120,7 @@ public class ExperimentManager : MonoBehaviour
     {
         for (int i = 0; i < distancesMeters.Length; i++)
         {
-            int j = Random.Range(i, distancesMeters.Length);
+            int j = UnityEngine.Random.Range(i, distancesMeters.Length);
             float temp = distancesMeters[i];
             distancesMeters[i] = distancesMeters[j];
             distancesMeters[j] = temp;
@@ -135,7 +141,7 @@ public class ExperimentManager : MonoBehaviour
 
         Debug.Log(
             $"Trial {trialIndex + 1}/{distancesMeters.Length} | " +
-            $"Distance = {distance:F2} m | Response = {(positionBehind ? "BEHIND" : "BEFORE")}"
+            $"Distance = {distance:F2} m | Response = {(positionBehind ? "BEHIND" : "FRONT")}"
         );
     }
 
