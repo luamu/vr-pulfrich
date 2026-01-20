@@ -12,7 +12,7 @@ public enum DominantEye
 public class ExperimentManager : MonoBehaviour
 {
     [Header("Stimuli")]
-    public MovingBarStimulus movingBar;        // controller
+    public MovingBarBandStimulus movingBar;        // controller
 
     [Header("Stimulus Speed")]
     public float speedDegPerSec = 20f;
@@ -60,6 +60,10 @@ public class ExperimentManager : MonoBehaviour
             enabled = false;
             return;
         }
+
+        // Ensure the stimulus uses THIS camera for correct distance placement & FOV
+        if (camera != null)
+        movingBar.stimulusCamera = camera;
 
         // Set position of eye shading
         shadingManager.SetEyePosition(Convert.ToInt32(dominantEye));

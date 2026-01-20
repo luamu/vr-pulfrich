@@ -11,6 +11,10 @@ public class MovingBarBandStimulus : MonoBehaviour
     [Tooltip("A Quad/Cube prefab used as one bar (e.g. a Quad with a material).")]
     public Transform barPrefab;
 
+    [Header("Camera (REQUIRED)")]
+    [Tooltip("Camera used for distance placement + FOV computations.")]
+    public Camera stimulusCamera;
+
     [Header("Visual Angle")]
     [Range(0.1f, 60f)]
     public float visualHeightDeg = 4f;
@@ -21,7 +25,7 @@ public class MovingBarBandStimulus : MonoBehaviour
     public float gapDeg = 0.5f;
 
     [Header("Motion")]
-    [Tooltip("Horizontal speed in deg/sec (converted to meters based on final Z).")]
+    [Tooltip("Horizontal speed in deg/sec (converted to meters based on viewing distance).")]
     public float speedDegPerSec = 20f;
 
     [Tooltip("Extra padding outside FOV for wrap/reposition, in degrees.")]
@@ -32,7 +36,7 @@ public class MovingBarBandStimulus : MonoBehaviour
     public float yOffsetDeg = 0f;
 
     [Header("Distance")]
-    [Tooltip("Reference distance (same as checkerboard distance).")]
+    [Tooltip("Reference distance (same as checkerboard distance), in meters from the camera.")]
     public float baseDistanceMeters = 15f;
 
     float signedOffsetMeters = 0f;
@@ -40,6 +44,8 @@ public class MovingBarBandStimulus : MonoBehaviour
 
     float halfHFovDeg;
     float halfVFovDeg;
+
+    float currentDistanceMeters;
 
     readonly List<Transform> bars = new List<Transform>();
 
@@ -52,28 +58,38 @@ public class MovingBarBandStimulus : MonoBehaviour
             return;
         }
 
+        if (stimulusCamera == null)
+        {
+            // Fallback: try parent camera, but you should really assign it explicitly.
+            stimulusCamera = GetComponentInParent<Camera>();
+        }
+
+        if (stimulusCamera == null)
+        {
+            Debug.LogError("MovingBarBandStimulus: stimulusCamera not assigned and no parent camera found.");
+            enabled = false;
+            return;
+        }
+
         CacheFov();
-        BuildOrRebuildBand();
+        RebuildForCurrentTrial();
     }
 
     void Update()
     {
-        if (bars.Count == 0) return;
+        if (bars.Count == 0 || stimulusCamera == null) return;
 
-        float z = GetFinalZ();
-
-        // Move at constant angular speed converted to meters at current Z
-        float dx = AngleToOffsetMeters(z, speedDegPerSec) * Time.deltaTime * direction;
+        // Move at constant angular speed converted to meters at the current viewing distance.
+        float dx = AngleToOffsetMeters(currentDistanceMeters, speedDegPerSec) * Time.deltaTime * direction;
 
         for (int i = 0; i < bars.Count; i++)
         {
             Vector3 p = bars[i].localPosition;
             p.x += dx;
-            p.z = z; // keep z updated per trial
             bars[i].localPosition = p;
         }
 
-        WrapBarsIfNeeded(z);
+        WrapBarsIfNeeded();
     }
 
     /// <summary>
@@ -87,48 +103,60 @@ public class MovingBarBandStimulus : MonoBehaviour
         speedDegPerSec = Mathf.Max(0.01f, newSpeedDegPerSec);
 
         CacheFov();
-        BuildOrRebuildBand();   // ensures "already filled" at trial start
+        RebuildForCurrentTrial(); // ensures "already filled" at trial start
     }
 
-    void BuildOrRebuildBand()
+    void RebuildForCurrentTrial()
     {
-        float z = GetFinalZ();
+        // 1) Compute true viewing distance (meters from camera)
+        currentDistanceMeters = Mathf.Max(0.05f, baseDistanceMeters + signedOffsetMeters);
 
-        // Convert bar size and spacing to meters at this z
-        float barH = VisualAngleToSize(z, visualHeightDeg);
-        float barW = VisualAngleToSize(z, barWidthDeg);
+        // 2) Place the entire band object exactly that far in front of the camera
+        //    This is the key fix: distance is now REAL distance from camera, not "world z".
+        Transform camT = stimulusCamera.transform;
+        Vector3 center = camT.position + camT.forward * currentDistanceMeters;
+        transform.position = center;
+        transform.rotation = camT.rotation; // face the camera, keeps "x = horizontal, y = vertical"
+
+        // 3) Now build bars in LOCAL space on the plane (z=0), sized by visual degrees at that distance
+        BuildOrRebuildBandLocal();
+    }
+
+    void BuildOrRebuildBandLocal()
+    {
+        // Convert bar size and spacing to meters at this viewing distance
+        float barH = VisualAngleToSize(currentDistanceMeters, visualHeightDeg);
+        float barW = VisualAngleToSize(currentDistanceMeters, barWidthDeg);
 
         float spacingDeg = Mathf.Max(0.0001f, barWidthDeg + gapDeg);
-        float spacingM = VisualAngleToSize(z, spacingDeg);
+        float spacingM = VisualAngleToSize(currentDistanceMeters, spacingDeg);
 
-        // Horizontal visible extent (+ padding) in meters
+        // Horizontal visible extent (+ padding) in meters at this distance
         float extentDeg = halfHFovDeg + spawnPaddingDeg;
-        float extentM = AngleToOffsetMeters(z, extentDeg);
+        float extentM = AngleToOffsetMeters(currentDistanceMeters, extentDeg);
 
-        float yM = AngleToOffsetMeters(z, yOffsetDeg);
+        float yM = AngleToOffsetMeters(currentDistanceMeters, yOffsetDeg);
 
-        // How many bars do we need to cover from -extentM to +extentM?
-        // Add a couple extras so wrapping is seamless.
         int needed = Mathf.CeilToInt((2f * extentM) / spacingM) + 3;
         needed = Mathf.Max(1, needed);
 
-        // Ensure we have exactly that many instances
         EnsureBarCount(needed);
 
-        // Apply size and lay them out to fully fill at trial start
         for (int i = 0; i < bars.Count; i++)
         {
             Transform t = bars[i];
-            t.localScale = new Vector3(barW, barH, 1f);
+
+            // NOTE: if your prefab is a Unity Quad, its size is 1x1 in X/Y.
+            // This scaling makes it the correct physical size at the plane.
+            t.localScale = new Vector3(barW, barH, 0f);
 
             float x = -extentM + i * spacingM;
-            t.localPosition = new Vector3(x, yM, z);
+            t.localPosition = new Vector3(x, yM, 0f);
         }
     }
 
     void EnsureBarCount(int needed)
     {
-        // Create missing
         while (bars.Count < needed)
         {
             Transform t = Instantiate(barPrefab, transform);
@@ -136,7 +164,6 @@ public class MovingBarBandStimulus : MonoBehaviour
             bars.Add(t);
         }
 
-        // Remove extras
         while (bars.Count > needed)
         {
             Transform t = bars[bars.Count - 1];
@@ -145,17 +172,16 @@ public class MovingBarBandStimulus : MonoBehaviour
         }
     }
 
-    void WrapBarsIfNeeded(float z)
+    void WrapBarsIfNeeded()
     {
         float extentDeg = halfHFovDeg + spawnPaddingDeg;
-        float extentM = AngleToOffsetMeters(z, extentDeg);
+        float extentM = AngleToOffsetMeters(currentDistanceMeters, extentDeg);
 
         float spacingDeg = Mathf.Max(0.0001f, barWidthDeg + gapDeg);
-        float spacingM = VisualAngleToSize(z, spacingDeg);
+        float spacingM = VisualAngleToSize(currentDistanceMeters, spacingDeg);
 
         if (direction == 1)
         {
-            // Moving left -> right: if a bar passes +extent, move it behind the leftmost bar
             float leftmostX = float.PositiveInfinity;
             for (int i = 0; i < bars.Count; i++)
                 leftmostX = Mathf.Min(leftmostX, bars[i].localPosition.x);
@@ -166,16 +192,13 @@ public class MovingBarBandStimulus : MonoBehaviour
                 {
                     Vector3 p = bars[i].localPosition;
                     p.x = leftmostX - spacingM;
-                    p.z = z;
                     bars[i].localPosition = p;
-
-                    leftmostX = p.x; // update so multiple can wrap cleanly
+                    leftmostX = p.x;
                 }
             }
         }
         else
         {
-            // Moving right -> left: if a bar passes -extent, move it behind the rightmost bar
             float rightmostX = float.NegativeInfinity;
             for (int i = 0; i < bars.Count; i++)
                 rightmostX = Mathf.Max(rightmostX, bars[i].localPosition.x);
@@ -186,37 +209,28 @@ public class MovingBarBandStimulus : MonoBehaviour
                 {
                     Vector3 p = bars[i].localPosition;
                     p.x = rightmostX + spacingM;
-                    p.z = z;
                     bars[i].localPosition = p;
-
                     rightmostX = p.x;
                 }
             }
         }
     }
 
-    float GetFinalZ()
-    {
-        float z = baseDistanceMeters + signedOffsetMeters;
-        return Mathf.Max(0.05f, z);
-    }
-
     void CacheFov()
     {
-        Camera cam = GetComponentInParent<Camera>();
-        if (cam == null)
+        if (stimulusCamera == null)
         {
-            Debug.LogWarning("MovingBarBandStimulus: No parent Camera found. Using fallback FOV.");
+            Debug.LogWarning("MovingBarBandStimulus: No camera. Using fallback FOV.");
             halfVFovDeg = 45f;
             halfHFovDeg = 60f;
             return;
         }
 
-        halfVFovDeg = cam.fieldOfView * 0.5f;
+        halfVFovDeg = stimulusCamera.fieldOfView * 0.5f;
 
         // hFov = 2 * atan(tan(vFov/2) * aspect)
         float halfVRad = halfVFovDeg * Mathf.Deg2Rad;
-        float halfHRad = Mathf.Atan(Mathf.Tan(halfVRad) * cam.aspect);
+        float halfHRad = Mathf.Atan(Mathf.Tan(halfVRad) * stimulusCamera.aspect);
         halfHFovDeg = halfHRad * Mathf.Rad2Deg;
     }
 
