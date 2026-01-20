@@ -48,6 +48,10 @@ public class ExperimentManager : MonoBehaviour
         1.0f
     };
 
+    ////////////////////////
+    /// experiment control
+    ////////////////////////
+
     void Start()
     {
         if (movingBar == null)
@@ -107,6 +111,10 @@ public class ExperimentManager : MonoBehaviour
             SubmitResponse(false);
     }
 
+    ///////////////////////
+    /// manipulate stimuli
+    ///////////////////////
+
     int GetStimulusDirection()
     {
         // Convention:
@@ -127,6 +135,10 @@ public class ExperimentManager : MonoBehaviour
         }
     }
 
+    ///////////////////////
+    // data documentation
+    ///////////////////////
+    
     void SubmitResponse(bool positionBehind)
     {
         if (!awaitingResponse)
@@ -136,7 +148,7 @@ public class ExperimentManager : MonoBehaviour
 
         float distance = distancesMeters[trialIndex];
 
-        // Write response (distance + behind/before) to file
+        // Write response (distance + behind/front) to file
         WriteLine(distance, positionBehind);
 
         Debug.Log(
