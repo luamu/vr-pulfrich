@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum DominantEye
 {
@@ -25,6 +26,10 @@ public class ExperimentManager : MonoBehaviour
     public DominantEye dominantEye = DominantEye.right;
     public ShadingManager shadingManager;
     public Camera camera;
+
+    [Header("Inter-Trial Screen")]
+    public GameObject grayScreen;
+    public float interTrialInterval = 1.0f;
 
     int trialIndex = -1;
     bool awaitingResponse = false;
@@ -76,31 +81,44 @@ public class ExperimentManager : MonoBehaviour
 
     IEnumerator RunExperiment()
     {
-    for (trialIndex = 0; trialIndex < distancesMeters.Length; trialIndex++)
-    {
-        float distance = distancesMeters[trialIndex];
+        for (trialIndex = 0; trialIndex < distancesMeters.Length; trialIndex++)
+        {
+            float distance = distancesMeters[trialIndex];
 
-        movingBar.Configure(
-            newSignedOffsetMeters: distance,
-            newDirection: GetStimulusDirection(),
-            newSpeedDegPerSec: speedDegPerSec
-        );
+            // Hide gray screen, show stimulus
+            if (grayScreen != null)
+                grayScreen.SetActive(false);
 
-        awaitingResponse = true;
+            movingBar.gameObject.SetActive(true);
 
-        // Wait for response
-        while (awaitingResponse)
-            yield return null;
+            movingBar.Configure(
+                newSignedOffsetMeters: distance,
+                newDirection: GetStimulusDirection(),
+                newSpeedDegPerSec: speedDegPerSec
+            );
+
+            awaitingResponse = true;
+
+            // Wait for response
+            while (awaitingResponse)
+                yield return null;
+
+            // ---- Inter-trial interval ----
+            movingBar.gameObject.SetActive(false);
+
+            if (grayScreen != null)
+                grayScreen.SetActive(true);
+
+            yield return new WaitForSeconds(interTrialInterval);
+        }
+
+        // End of experiment
+        if (grayScreen != null)
+            grayScreen.SetActive(true);
+
+        Debug.Log("Experiment finished.");
     }
 
-    // Gray screen after experiment is finished
-    if (movingBar != null)
-    {
-        movingBar.gameObject.SetActive(false);
-    }
-
-    Debug.Log("Experiment finished.");
-    }
 
     void Update()
     {
