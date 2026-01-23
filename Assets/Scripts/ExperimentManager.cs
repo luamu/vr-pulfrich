@@ -14,6 +14,7 @@ public class ExperimentManager : MonoBehaviour
 {
     [Header("Stimuli")]
     public MovingBarBandStimulus movingBar;        // controller
+    public int RepeatsPerCondition = 2;
 
     [Header("Stimulus Speed")]
     public float speedDegPerSec = 20f;
@@ -37,20 +38,13 @@ public class ExperimentManager : MonoBehaviour
     
     float[] distancesMeters = new float[]
     {
-        -10.0f,
-        10.0f,
-        -8.0f,
-        8.0f,
+        -9.0f,
+        9.0f,
         -6.0f,
         6.0f,
-        -5.0f,
-        5.0f,
-        -4.0f,
-        4.0f,
-        -2.0f,
-        2.0f,
-        -1.0f,
-        1.0f
+        -3.0f,
+        3.0f,
+        0f
     };
 
     ////////////////////////
@@ -73,43 +67,47 @@ public class ExperimentManager : MonoBehaviour
         // Set position of eye shading
         shadingManager.SetEyePosition(Convert.ToInt32(dominantEye));
         
-        ShuffleDistances();   //randomize trial order
-
         SetupOutputFile();
         StartCoroutine(RunExperiment());
     }
 
     IEnumerator RunExperiment()
     {
-        for (trialIndex = 0; trialIndex < distancesMeters.Length; trialIndex++)
+        for (int i = 0; i < RepeatsPerCondition; i++)
         {
-            float distance = distancesMeters[trialIndex];
+            ShuffleDistances();   //randomize trial order
+            Debug.Log($"== Block {i + 1}/{RepeatsPerCondition} ==");
+            for (trialIndex = 0; trialIndex < distancesMeters.Length; trialIndex++)
+            {
+                float distance = distancesMeters[trialIndex];
 
-            // Hide gray screen, show stimulus
-            if (grayScreen != null)
-                grayScreen.SetActive(false);
+                // Hide gray screen, show stimulus
+                if (grayScreen != null)
+                    grayScreen.SetActive(false);
 
-            movingBar.gameObject.SetActive(true);
+                movingBar.gameObject.SetActive(true);
 
-            movingBar.Configure(
-                newSignedOffsetMeters: distance,
-                newDirection: GetStimulusDirection(),
-                newSpeedDegPerSec: speedDegPerSec
-            );
+                movingBar.Configure(
+                    newSignedOffsetMeters: distance,
+                    newDirection: GetStimulusDirection(),
+                    newSpeedDegPerSec: speedDegPerSec
+                );
 
-            awaitingResponse = true;
+                awaitingResponse = true;
 
-            // Wait for response
-            while (awaitingResponse)
-                yield return null;
+                // Wait for response
+                while (awaitingResponse)
+                    yield return null;
 
-            // ---- Inter-trial interval ----
-            movingBar.gameObject.SetActive(false);
+                // ---- Inter-trial interval ----
+                movingBar.gameObject.SetActive(false);
 
-            if (grayScreen != null)
-                grayScreen.SetActive(true);
+                if (grayScreen != null)
+                    grayScreen.SetActive(true);
 
-            yield return new WaitForSeconds(interTrialInterval);
+                yield return new WaitForSeconds(interTrialInterval);
+            }
+
         }
 
         // End of experiment
@@ -160,7 +158,7 @@ public class ExperimentManager : MonoBehaviour
     ///////////////////////
     // data documentation
     ///////////////////////
-    
+
     void SubmitResponse(bool positionBehind)
     {
         if (!awaitingResponse)
