@@ -174,7 +174,17 @@ MonoBehaviour:
   speedDegPerSec: 10
   spawnPaddingDeg: 2
   yOffsetDeg: 3
-  baseDistanceMeters: 15
+  baseDistanceMeters: 1
+  perBarTiltDegRange: {x: -90, y: 90}
+  colorPalette: []
+  hsvSaturationRange: {x: 0.6, y: 1}
+  hsvValueRange: {x: 0.6, y: 1}
+  hueJitter: 0.05
+  saturationJitter: 0.15
+  valueJitter: 0.15
+  colorPropertyNames:
+  - _BaseColor
+  - _Color
 --- !u!4 &386503564 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9014170783809206335, guid: 895f6f3c2d334633b5800312285058d2, type: 3}
@@ -737,8 +747,8 @@ Transform:
   m_GameObject: {fileID: 1297755225}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -4, z: 15}
-  m_LocalScale: {x: 6, y: 6, z: 1}
+  m_LocalPosition: {x: 0, y: -0.26666668, z: 1}
+  m_LocalScale: {x: 0.4, y: 0.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 386503564}

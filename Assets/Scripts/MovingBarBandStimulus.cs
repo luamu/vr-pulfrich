@@ -38,7 +38,7 @@ public class MovingBarBandStimulus : MonoBehaviour
 
     [Header("Distance")]
     [Tooltip("Reference distance (same as checkerboard distance), in meters from the camera.")]
-    public float baseDistanceMeters = 15f;
+    public float baseDistanceMeters = 1f;
 
     [Header("Per-Bar Tilt (degrees)")]
     [Tooltip("Each bar gets a random Z-tilt within this range every trial. -90..90 covers vertical/horizontal/all in-between.")]

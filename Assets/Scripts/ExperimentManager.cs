@@ -38,13 +38,13 @@ public class ExperimentManager : MonoBehaviour
     
     float[] distancesMeters = new float[]
     {
-        -9.0f,
-        9.0f,
-        -6.0f,
-        6.0f,
-        -3.0f,
-        3.0f,
-        0f
+        -0.5f,
+        -0.1f,
+        0f,
+        1f,
+        3f,
+        6f,
+        9f
     };
 
     ////////////////////////
