@@ -20,7 +20,7 @@ public class ExperimentManager : MonoBehaviour
     public float speedDegPerSec = 20f;
 
     [Header("Participant Name")]
-    [Tooltip("Will be used for the output filename: Pulfrich_<contestantName>.csv")]
+    [Tooltip("Will be used for the output filename: <contestantName>.csv")]
     public string contestantName = "test";
 
     [Header("Eye configuration")]
@@ -195,7 +195,7 @@ public class ExperimentManager : MonoBehaviour
             safeName = safeName.Replace(c.ToString(), "_");
 
         // name with contestant and timestamp
-        outputFileName = $"Pulfrich_{safeName}_{System.DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        outputFileName = $"{safeName}_{System.DateTime.Now:yyyyMMdd_HHmmss}_Pulfrich.csv";
 
         string path = Path.Combine(outputDir, outputFileName);
 

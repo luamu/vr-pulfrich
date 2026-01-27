@@ -713,7 +713,7 @@ MonoBehaviour:
   movingBar: {fileID: 161546872}
   RepeatsPerCondition: 4
   speedDegPerSec: 20
-  contestantName: test
+  contestantName: NAME_noshading
   dominantEye: 1
   shadingManager: {fileID: 644486517}
   camera: {fileID: 1422286990}
