@@ -27,8 +27,6 @@ public class ExperimentManager : MonoBehaviour
     public DominantEye dominantEye = DominantEye.right;
     public ShadingManager shadingManager;
     public Camera camera;
-    public Material filterMaterial;
-    public bool filterOn = true;
 
     [Header("Inter-Trial Screen")]
     public GameObject grayScreen;
@@ -66,9 +64,6 @@ public class ExperimentManager : MonoBehaviour
         if (camera != null)
         movingBar.stimulusCamera = camera;
 
-        // Set eye shading/filter on or off
-        ToggleFilter(filterOn);
-        
         // Set position of eye shading
         shadingManager.SetEyePosition(Convert.ToInt32(dominantEye));
         
@@ -76,22 +71,6 @@ public class ExperimentManager : MonoBehaviour
         StartCoroutine(RunExperiment());
     }
 
-    void ToggleFilter(bool filterOn)
-    {
-        float filterColor = 0f;
-        if (filterOn) 
-        {
-            filterColor = 0.9f;
-        } 
-        else {
-            filterColor = 0f; 
-        }
-        Color oldColor = filterMaterial.color;
-        Color newColor = new Color(oldColor.r, oldColor.g, oldColor.b, filterColor);
-        filterMaterial.SetColor("_Color", newColor);
-        
-    }
-    
     IEnumerator RunExperiment()
     {
         for (int i = 0; i < RepeatsPerCondition; i++)
