@@ -717,6 +717,8 @@ MonoBehaviour:
   dominantEye: 1
   shadingManager: {fileID: 644486517}
   camera: {fileID: 1422286990}
+  filterMaterial: {fileID: 2100000, guid: 8de7914e9e569974cbccae255b10ae35, type: 2}
+  filterOn: 1
   grayScreen: {fileID: 818302552}
   interTrialInterval: 1
 --- !u!1 &1297755225
