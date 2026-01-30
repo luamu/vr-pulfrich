@@ -27,6 +27,8 @@ public class ExperimentManager : MonoBehaviour
     public DominantEye dominantEye = DominantEye.right;
     public ShadingManager shadingManager;
     public Camera camera;
+    public Material filterMaterial;
+    public bool filterOn = true;
 
     [Header("Inter-Trial Screen")]
     public GameObject grayScreen;
@@ -38,13 +40,19 @@ public class ExperimentManager : MonoBehaviour
     
     float[] distancesMeters = new float[]
     {
-        -9.0f,
-        9.0f,
-        -6.0f,
-        6.0f,
-        -3.0f,
-        3.0f,
-        0f
+        -0.5f,
+        -0.3f,
+        -0.2f,
+        -0.12f,
+        -0.08f,
+        -0.04f,
+        0f,
+        0.04f,
+        0.08f,
+        0.12f,
+        0.2f,
+        0.3f,
+        0.5f
     };
 
     ////////////////////////
@@ -67,10 +75,29 @@ public class ExperimentManager : MonoBehaviour
         // Set position of eye shading
         shadingManager.SetEyePosition(Convert.ToInt32(dominantEye));
         
+        // Set eye shading/filter on or off
+        ToggleFilter(filterOn);
+        
         SetupOutputFile();
         StartCoroutine(RunExperiment());
     }
-
+    
+    void ToggleFilter(bool filterOn)
+    {
+        float filterColor = 0f;
+        if (filterOn) 
+        {
+            filterColor = 0.9f;
+        } 
+        else {
+            filterColor = 0f; 
+        }
+        Color oldColor = filterMaterial.color;
+        Color newColor = new Color(oldColor.r, oldColor.g, oldColor.b, filterColor);
+        filterMaterial.SetColor("_Color", newColor);
+        
+    }
+    
     IEnumerator RunExperiment()
     {
         for (int i = 0; i < RepeatsPerCondition; i++)
@@ -189,7 +216,7 @@ public class ExperimentManager : MonoBehaviour
             safeName = safeName.Replace(c.ToString(), "_");
 
         // name with contestant and timestamp
-        outputFileName = $"Pulfrich_{safeName}_{System.DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        outputFileName = $"{safeName}_{System.DateTime.Now:yyyyMMdd_HHmmss}_Pulfrich.csv";
 
         string path = Path.Combine(outputDir, outputFileName);
 
